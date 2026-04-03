@@ -485,6 +485,8 @@ function selectYN(choice, g, k, lbl) {
     showAmountField(document.getElementById('step-content'), g, k, lbl, val);
   } else {
     if (g==='fixed') delete budget.fixed[k]; else delete budget.entertain[k];
+    // Auto-advance to next step after brief delay so user sees the No selection
+    setTimeout(() => nextStep(), 400);
   }
 }
 
