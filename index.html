@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Budget Angels — Take Control of Your Money</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #0B1426;
+      --navy2:   #121E36;
+      --navy3:   #1A2D50;
+      --gold:    #C9A84C;
+      --gold2:   #E8C56A;
+      --gold3:   #F5DFA0;
+      --cream:   #F8F4EC;
+      --white:   #FFFFFF;
+      --muted:   #8A9BB8;
+      --border:  rgba(201,168,76,0.2);
+      --serif:   'Playfair Display', Georgia, serif;
+      --sans:    'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--navy);
+      color: var(--cream);
+      font-family: var(--sans);
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 60px;
+      background: rgba(11,20,38,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold2);
+      letter-spacing: 0.02em;
+      text-decoration: none;
+    }
+    .logo span { color: var(--cream); }
+    .nav-links {
+      display: flex; gap: 36px; list-style: none;
+      align-items: center;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold2); }
+    .nav-cta {
+      background: var(--gold);
+      color: var(--navy) !important;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-weight: 500 !important;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--gold2) !important; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 60px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 70% 50%, rgba(26,45,80,0.9) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(201,168,76,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 660px;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 28px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block; width: 28px; height: 1px;
+      background: var(--gold);
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(48px, 6vw, 82px);
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 28px;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--gold2);
+    }
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 500px;
+      margin-bottom: 48px;
+    }
+    .hero-sub strong { color: var(--cream); font-weight: 400; }
+
+    /* Formula pill */
+    .formula {
+      display: inline-flex; align-items: center; gap: 0;
+      background: rgba(201,168,76,0.08);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 24px;
+      font-family: var(--serif);
+      font-size: 17px;
+      color: var(--cream);
+      margin-bottom: 44px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .formula-piece { display: flex; align-items: center; gap: 12px; }
+    .formula .op { color: var(--gold); font-weight: 700; font-size: 20px; }
+    .formula .result { color: var(--gold2); font-weight: 700; }
+    .formula .label {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+    }
+
+    .hero-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--gold);
+      color: var(--navy);
+      padding: 15px 32px;
+      border-radius: 4px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+    .btn-primary:hover { background: var(--gold2); transform: translateY(-1px); }
+    .btn-ghost {
+      color: var(--cream);
+      font-size: 14px;
+      text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+      opacity: 0.7; transition: opacity 0.2s;
+    }
+    .btn-ghost:hover { opacity: 1; }
+    .btn-ghost::after { content: '→'; }
+
+    /* Hero visual — right side */
+    .hero-visual {
+      position: absolute;
+      right: 60px; top: 50%;
+      transform: translateY(-50%);
+      width: 420px;
+    }
+    .budget-card {
+      background: var(--navy2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .budget-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--gold2), transparent);
+    }
+    .card-title {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .card-income {
+      font-family: var(--serif);
+      font-size: 38px; font-weight: 700;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .card-income-label { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+    .card-bars { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .bar-row { display: flex; flex-direction: column; gap: 6px; }
+    .bar-meta { display: flex; justify-content: space-between; font-size: 13px; }
+    .bar-name { color: var(--cream); }
+    .bar-val { color: var(--muted); }
+    .bar-track {
+      height: 6px; background: rgba(255,255,255,0.06);
+      border-radius: 3px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 3px;
+      animation: fillBar 1.2s ease-out forwards;
+    }
+    @keyframes fillBar { from { width: 0; } }
+    .bar-fixed  .bar-fill { background: #5B8EDB; width: 52%; }
+    .bar-entertain .bar-fill { background: #9B6DBF; width: 22%; }
+    .bar-savings .bar-fill { background: var(--gold); width: 26%; }
+
+    .card-result {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 8px;
+    }
+    .result-label { font-size: 13px; color: var(--muted); }
+    .result-amount { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--gold2); }
+
+    /* ── HOW IT WORKS ── */
+    .section { padding: 100px 60px; }
+    .section-eyebrow {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-family: var(--serif);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+    h2 em { font-style: italic; color: var(--gold2); }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      margin-top: 60px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .step {
+      background: var(--navy2);
+      padding: 36px 28px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .step:hover { background: var(--navy3); }
+    .step-num {
+      font-family: var(--serif);
+      font-size: 52px; font-weight: 900;
+      color: rgba(201,168,76,0.12);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .step-title {
+      font-size: 17px; font-weight: 500;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+    .step-desc { font-size: 14px; line-height: 1.7; color: var(--muted); }
+    .step-icon {
+      width: 36px; height: 36px;
+      background: rgba(201,168,76,0.1);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    /* ── BUCKETS ── */
+    .buckets-section {
+      padding: 100px 60px;
+      background: var(--navy2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .buckets-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 56px;
+      flex-wrap: wrap; gap: 24px;
+    }
+    .buckets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .bucket {
+      border-radius: 12px;
+      padding: 32px 28px;
+      border: 1px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: default;
+    }
+    .bucket:hover { transform: translateY(-4px); }
+    .bucket-income    { background: rgba(91,142,219,0.08); border-color: rgba(91,142,219,0.2); }
+    .bucket-fixed     { background: rgba(155,109,191,0.08); border-color: rgba(155,109,191,0.2); }
+    .bucket-entertain { background: rgba(219,130,91,0.08); border-color: rgba(219,130,91,0.2); }
+    .bucket-savings   { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.25); }
+    .bucket-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      margin-bottom: 20px;
+    }
+    .bucket-income    .bucket-dot { background: #5B8EDB; }
+    .bucket-fixed     .bucket-dot { background: #9B6DBF; }
+    .bucket-entertain .bucket-dot { background: #DB825B; }
+    .bucket-savings   .bucket-dot { background: var(--gold); }
+    .bucket-name {
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .bucket-title {
+      font-family: var(--serif);
+      font-size: 24px; font-weight: 700;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+    .bucket-desc { font-size: 14px; line-height: 1.7; color: var(--muted); }
+    .bucket-items {
+      margin-top: 16px;
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .bucket-tag {
+      font-size: 11px; padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+    }
+
+    /* ── TESTIMONIAL / STAT BAND ── */
+    .stat-band {
+      padding: 60px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+    }
+    .stat-item {
+      background: var(--navy);
+      padding: 40px 48px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 54px; font-weight: 900;
+      color: var(--gold2);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label { font-size: 14px; color: var(--muted); }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      padding: 120px 60px;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 { margin-bottom: 16px; }
+    .cta-section p {
+      font-size: 18px; color: var(--muted);
+      max-width: 480px; margin: 0 auto 44px;
+      line-height: 1.7;
+    }
+    .cta-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .btn-outline {
+      border: 1px solid var(--border);
+      color: var(--cream);
+      padding: 14px 28px;
+      border-radius: 4px;
+      font-size: 14px;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold2); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    footer p { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--gold2); }
+
+    /* ── ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1100px) {
+      .hero-visual { display: none; }
+      .steps-grid, .buckets-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-band { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .hero, .section, .buckets-section, .cta-section { padding-left: 24px; padding-right: 24px; }
+      .steps-grid, .buckets-grid { grid-template-columns: 1fr; }
+      .stat-band { padding: 24px; }
+      footer { padding: 32px 24px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Budget<span>Angels</span></a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#strategy">The strategy</a></li>
+    <li><a href="#resources">Resources</a></li>
+    <li><a href="#" class="nav-cta">Start budgeting</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">A smarter budgeting system</div>
+    <h1>Your money,<br/><em>finally</em> working<br/>for you.</h1>
+    <p class="hero-sub">
+      Budget Angels teaches you a simple, powerful framework —
+      <strong>one formula, four categories</strong> — and gives you
+      the tools to see exactly where your money goes every month.
+    </p>
+
+    <div class="formula">
+      <span class="formula-piece">
+        <span><span class="label">Income</span>$6,500</span>
+        <span class="op">−</span>
+      </span>
+      <span class="formula-piece">
+        <span><span class="label">Fixed</span>$3,380</span>
+        <span class="op">−</span>
+      </span>
+      <span class="formula-piece">
+        <span><span class="label">Entertainment</span>$1,430</span>
+        <span class="op">=</span>
+      </span>
+      <span class="formula-piece">
+        <span class="result"><span class="label">Savings</span>$1,690</span>
+      </span>
+    </div>
+
+    <div class="hero-actions">
+      <a href="#" class="btn-primary">Try the budget tool free</a>
+      <a href="#how" class="btn-ghost">See how it works</a>
+    </div>
+  </div>
+
+  <!-- Floating card -->
+  <div class="hero-visual">
+    <div class="budget-card">
+      <div class="card-title">Your monthly budget</div>
+      <div class="card-income">$6,500</div>
+      <div class="card-income-label">Monthly net income</div>
+      <div class="card-bars">
+        <div class="bar-row bar-fixed">
+          <div class="bar-meta">
+            <span class="bar-name">Fixed expenses</span>
+            <span class="bar-val">$3,380 · 52%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill"></div></div>
+        </div>
+        <div class="bar-row bar-entertain">
+          <div class="bar-meta">
+            <span class="bar-name">Entertainment</span>
+            <span class="bar-val">$1,430 · 22%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill"></div></div>
+        </div>
+        <div class="bar-row bar-savings">
+          <div class="bar-meta">
+            <span class="bar-name">Savings</span>
+            <span class="bar-val">$1,690 · 26%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill"></div></div>
+        </div>
+      </div>
+      <div class="card-result">
+        <span class="result-label">💰 Savings this month</span>
+        <span class="result-amount">$1,690</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-eyebrow">The process</div>
+  <h2>Simple steps to <em>financial clarity</em></h2>
+
+  <div class="steps-grid fade-up">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📥</div>
+      <div class="step-title">Enter your income</div>
+      <div class="step-desc">Add all sources of monthly net income — salary, freelance, side income, anything that hits your account.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">📋</div>
+      <div class="step-title">List fixed expenses</div>
+      <div class="step-desc">Rent, insurance, utilities, subscriptions — every recurring cost that doesn't change month to month.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">🎭</div>
+      <div class="step-title">Track entertainment</div>
+      <div class="step-desc">Dining out, shopping, clothing, fun — the variable spending that's often where money quietly disappears.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">🌱</div>
+      <div class="step-title">See your savings</div>
+      <div class="step-desc">What's left is yours to grow — emergency fund, investments, real estate, vacation. Build real wealth.</div>
+    </div>
+  </div>
+</section>
+
+<!-- THE 4 BUCKETS -->
+<section class="buckets-section" id="strategy">
+  <div class="buckets-header">
+    <div>
+      <div class="section-eyebrow">The Romar framework</div>
+      <h2>Four buckets.<br/><em>One formula.</em></h2>
+    </div>
+    <a href="#" class="btn-outline">Download worksheet →</a>
+  </div>
+
+  <div class="buckets-grid fade-up">
+    <div class="bucket bucket-income">
+      <div class="bucket-dot"></div>
+      <div class="bucket-name">Bucket 1</div>
+      <div class="bucket-title">Income</div>
+      <div class="bucket-desc">Every dollar coming in. All sources, one total — the number everything else is measured against.</div>
+      <div class="bucket-items">
+        <span class="bucket-tag">Salary</span>
+        <span class="bucket-tag">Freelance</span>
+        <span class="bucket-tag">Side income</span>
+        <span class="bucket-tag">Investments</span>
+      </div>
+    </div>
+
+    <div class="bucket bucket-fixed">
+      <div class="bucket-dot"></div>
+      <div class="bucket-name">Bucket 2</div>
+      <div class="bucket-title">Fixed Expenses</div>
+      <div class="bucket-desc">The non-negotiables. Bills, insurance, debts, utilities — costs that recur every single month.</div>
+      <div class="bucket-items">
+        <span class="bucket-tag">Mortgage/Rent</span>
+        <span class="bucket-tag">Auto</span>
+        <span class="bucket-tag">Utilities</span>
+        <span class="bucket-tag">Insurance</span>
+        <span class="bucket-tag">Food</span>
+      </div>
+    </div>
+
+    <div class="bucket bucket-entertain">
+      <div class="bucket-dot"></div>
+      <div class="bucket-name">Bucket 3</div>
+      <div class="bucket-title">Entertainment</div>
+      <div class="bucket-desc">The fun money. Dining, shopping, experiences — where lifestyle lives and budgets often leak.</div>
+      <div class="bucket-items">
+        <span class="bucket-tag">Dining out</span>
+        <span class="bucket-tag">Clothing</span>
+        <span class="bucket-tag">Shopping</span>
+        <span class="bucket-tag">Events</span>
+      </div>
+    </div>
+
+    <div class="bucket bucket-savings">
+      <div class="bucket-dot"></div>
+      <div class="bucket-name">Bucket 4</div>
+      <div class="bucket-title">Savings</div>
+      <div class="bucket-desc">What's left — and what you build from. Emergency fund, stocks, real estate, the future you're creating.</div>
+      <div class="bucket-items">
+        <span class="bucket-tag">Emergency fund</span>
+        <span class="bucket-tag">Stocks</span>
+        <span class="bucket-tag">Real estate</span>
+        <span class="bucket-tag">Vacation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stat-band">
+  <div class="stat-item fade-up">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Simple budget categories — nothing more</div>
+  </div>
+  <div class="stat-item fade-up">
+    <div class="stat-num">1</div>
+    <div class="stat-label">Formula that gives you total financial clarity</div>
+  </div>
+  <div class="stat-item fade-up">
+    <div class="stat-num">∞</div>
+    <div class="stat-label">Months of savings you can build from here</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-eyebrow">Get started today</div>
+  <h2>Ready to meet your<br/><em>budget angels?</em></h2>
+  <p>Enter your numbers, see your money clearly, and start building the savings you've always wanted.</p>
+  <div class="cta-actions">
+    <a href="#" class="btn-primary">Start budgeting — it's free</a>
+    <a href="#" class="btn-outline">Learn the strategy first</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Budget Angels · <a href="https://romarwealth.com" style="color:var(--gold);text-decoration:none;">romarwealth.com</a></p>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Fade-up on scroll
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.15 }
+  );
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
