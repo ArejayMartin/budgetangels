@@ -183,13 +183,71 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 
 @media(max-width:900px){.manual-body{grid-template-columns:1fr}.manual-sidebar{position:static;height:auto}.fields-grid{grid-template-columns:repeat(2,1fr)}.buckets-grid{grid-template-columns:1fr}}
 @media(max-width:600px){nav{padding:16px 20px}.guided-card{padding:28px 20px}.fields-grid{grid-template-columns:1fr}.formula-band{padding:18px}.fi-val{font-size:20px}}
+
+/* AUTH MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:420px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:20px 20px 0 0}
+.modal-close{position:absolute;top:16px;right:18px;background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;transition:color 0.2s;line-height:1}
+.modal-close:hover{color:var(--cream)}
+.modal-title{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--white);margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.modal-tabs{display:flex;gap:0;margin-bottom:28px;background:rgba(255,255,255,0.04);border-radius:8px;padding:3px}
+.modal-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border-radius:6px;transition:all 0.2s}
+.modal-tab.active{background:var(--navy3);color:var(--cream)}
+.auth-field{margin-bottom:16px}
+.auth-label{font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.auth-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;outline:none;padding:13px 16px;font-family:var(--sans);font-size:14px;color:var(--white);transition:border-color 0.2s}
+.auth-input:focus{border-color:var(--gold)}
+.auth-input::placeholder{color:rgba(255,255,255,0.2)}
+.btn-auth{width:100%;background:var(--gold);color:var(--navy);padding:14px;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;border:none;cursor:pointer;transition:background 0.2s;margin-top:4px}
+.btn-auth:hover{background:var(--gold2)}
+.btn-auth:disabled{opacity:0.6;cursor:not-allowed}
+.auth-msg{font-size:13px;text-align:center;margin-top:14px;min-height:18px}
+.auth-msg.error{color:#E87070}
+.auth-msg.success{color:var(--green)}
+.nav-user{display:flex;align-items:center;gap:12px}
+.nav-user-email{font-size:12px;color:var(--muted)}
+.btn-signout{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);padding:7px 14px;border-radius:6px;font-family:var(--sans);font-size:12px;cursor:pointer;transition:all 0.2s}
+.btn-signout:hover{border-color:var(--coral);color:var(--coral)}
+.btn-signin-nav{background:transparent;border:1px solid var(--border);color:var(--gold2);padding:7px 16px;border-radius:6px;font-family:var(--sans);font-size:12px;cursor:pointer;transition:all 0.2s}
+.btn-signin-nav:hover{background:rgba(201,168,76,0.08)}
+.save-success{background:rgba(76,175,130,0.1);border:1px solid rgba(76,175,130,0.3);border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--green);margin-bottom:16px;display:none}
 </style>
 </head>
 <body>
 
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuthModal()">x</button>
+    <div class="modal-title">Welcome to Budget Angels</div>
+    <div class="modal-sub">Save your budget and track your progress month to month.</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+      <button class="modal-tab" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
+    </div>
+    <div id="auth-form-signup">
+      <div class="auth-field"><label class="auth-label">Email</label><input type="email" class="auth-input" id="signup-email" placeholder="you@example.com"/></div>
+      <div class="auth-field"><label class="auth-label">Password</label><input type="password" class="auth-input" id="signup-password" placeholder="Min. 6 characters"/></div>
+      <button class="btn-auth" onclick="handleSignup()">Create free account</button>
+    </div>
+    <div id="auth-form-signin" style="display:none">
+      <div class="auth-field"><label class="auth-label">Email</label><input type="email" class="auth-input" id="signin-email" placeholder="you@example.com"/></div>
+      <div class="auth-field"><label class="auth-label">Password</label><input type="password" class="auth-input" id="signin-password" placeholder="Your password"/></div>
+      <button class="btn-auth" onclick="handleSignin()">Sign in</button>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
 <nav>
   <a href="index.html" class="logo">Budget<span>Angels</span></a>
-  <a href="index.html" class="nav-back">← Back to home</a>
+  <div class="nav-user" id="nav-user">
+    <a href="index.html" class="nav-back" style="color:var(--muted);font-size:13px;text-decoration:none">← Home</a>
+    <button class="btn-signin-nav" onclick="openAuthModal()">Sign in</button>
+  </div>
 </nav>
 
 <!-- SCREEN: LANDING -->
@@ -334,11 +392,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
       </div>
     </div>
     <div class="breakdown-section" id="breakdown-section"></div>
-    <div class="save-cta">
-      <h3>Save your budget</h3>
-      <p>Create a free account to save your results, track changes month to month, and build toward your goals.</p>
-      <div class="save-cta-btns">
-        <button class="btn-create-account">Create free account</button>
+    <div class="save-success" id="save-success" style="display:none">✓ Budget saved to your account!</div>
+    <div class="save-cta" id="save-cta-box">
+      <h3 id="save-cta-title">Save your budget</h3>
+      <p id="save-cta-desc">Create a free account to save your results, track changes month to month, and build toward your goals.</p>
+      <div class="save-cta-btns" id="save-cta-btns">
+        <button class="btn-create-account" onclick="openAuthModal()">Create free account</button>
         <button class="btn-download" onclick="downloadPDF()">⬇ Download summary</button>
       </div>
       <br/>
@@ -674,6 +733,131 @@ function downloadPDF() {
 // ═══════════════════════════════
 function fmt(n) {
   return '$'+(parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+</script>
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://vogmzipskcctncanbgim.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ216aXBza2NjdG5jYW5iZ2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTEzNDMsImV4cCI6MjA5MDc2NzM0M30.-t614klOP52hqmmGVxoDFHBrRouvDo_9ShFz1Meipcg';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// Check session on load
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) setUser(session.user);
+});
+
+// Listen for auth changes
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) setUser(session.user);
+  else clearUser();
+});
+
+function setUser(user) {
+  currentUser = user;
+  document.getElementById('nav-user').innerHTML = `
+    <span class="nav-user-email">${user.email}</span>
+    <button class="btn-signout" onclick="handleSignout()">Sign out</button>
+  `;
+  // Update save CTA for logged-in users
+  const ctaBox = document.getElementById('save-cta-box');
+  if (ctaBox) {
+    document.getElementById('save-cta-title').textContent = 'Save this budget';
+    document.getElementById('save-cta-desc').textContent = 'Save your budget to your account to track it month to month.';
+    document.getElementById('save-cta-btns').innerHTML = `
+      <button class="btn-create-account" onclick="saveBudgetToAccount()">Save to my account</button>
+      <button class="btn-download" onclick="downloadPDF()">⬇ Download summary</button>
+    `;
+  }
+}
+
+function clearUser() {
+  currentUser = null;
+  document.getElementById('nav-user').innerHTML = `
+    <a href="index.html" class="nav-back" style="color:var(--muted);font-size:13px;text-decoration:none">← Home</a>
+    <button class="btn-signin-nav" onclick="openAuthModal()">Sign in</button>
+  `;
+}
+
+// ── MODAL ──
+function openAuthModal() {
+  document.getElementById('auth-modal').classList.add('open');
+  document.getElementById('auth-msg').textContent = '';
+  document.getElementById('auth-msg').className = 'auth-msg';
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').classList.remove('open');
+}
+document.getElementById('auth-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAuthModal();
+});
+
+function switchTab(tab) {
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+  document.getElementById('auth-form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-form-signin').style.display = tab === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-msg').textContent = '';
+}
+
+function setAuthMsg(msg, type) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+}
+
+async function handleSignup() {
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  if (!email || !password) return setAuthMsg('Please fill in all fields.', 'error');
+  if (password.length < 6) return setAuthMsg('Password must be at least 6 characters.', 'error');
+  setAuthMsg('Creating account...', '');
+  const { error } = await sb.auth.signUp({ email, password });
+  if (error) return setAuthMsg(error.message, 'error');
+  setAuthMsg('Account created! Check your email to confirm.', 'success');
+  setTimeout(() => { closeAuthModal(); saveBudgetToAccount(); }, 2000);
+}
+
+async function handleSignin() {
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  if (!email || !password) return setAuthMsg('Please fill in all fields.', 'error');
+  setAuthMsg('Signing in...', '');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) return setAuthMsg(error.message, 'error');
+  setAuthMsg('Signed in!', 'success');
+  setTimeout(() => { closeAuthModal(); saveBudgetToAccount(); }, 800);
+}
+
+async function handleSignout() {
+  await sb.auth.signOut();
+}
+
+// ── SAVE BUDGET ──
+async function saveBudgetToAccount() {
+  if (!currentUser) return openAuthModal();
+  const inc = budget.sources.reduce((s,x) => s+(parseFloat(x.amount)||0), 0);
+  const fix = Object.values(budget.fixed).reduce((s,v) => s+(v||0), 0);
+  const ent = Object.values(budget.entertain).reduce((s,v) => s+(v||0), 0);
+  const sav = inc - fix - ent;
+  const { error } = await sb.from('budgets').insert({
+    user_id: currentUser.id,
+    income: inc,
+    fixed_expenses: fix,
+    entertainment: ent,
+    savings: sav,
+    details: { sources: budget.sources, fixed: budget.fixed, entertain: budget.entertain },
+    created_at: new Date().toISOString()
+  });
+  if (error) { console.error(error); return; }
+  document.getElementById('save-success').style.display = 'flex';
+  document.getElementById('save-cta-btns').innerHTML = `
+    <button class="btn-download" onclick="downloadPDF()">⬇ Download summary</button>
+    <button class="btn-redo" onclick="showScreen('screen-landing')" style="background:transparent;border:1px solid var(--border);color:var(--cream);padding:12px 22px;border-radius:8px;font-family:var(--sans);font-size:14px;cursor:pointer">Start new budget</button>
+  `;
 }
 </script>
 </body>
