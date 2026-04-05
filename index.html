@@ -466,9 +466,35 @@
     <li><a href="#how">How it works</a></li>
     <li><a href="#strategy">The strategy</a></li>
     <li><a href="#resources">Resources</a></li>
+    <li id="nav-auth-item"><a href="#" onclick="openSignIn(event)" id="nav-signin-link" style="color:var(--muted);font-size:14px;letter-spacing:0.05em;text-transform:uppercase;text-decoration:none;transition:color 0.2s">Sign in</a></li>
     <li><a href="budget.html" class="nav-cta">Start budgeting</a></li>
   </ul>
 </nav>
+
+<!-- AUTH MODAL -->
+<div id="hp-auth-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.25s">
+  <div style="background:#121E36;border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:40px;width:100%;max-width:420px;position:relative">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#C9A84C,#E8C56A);border-radius:20px 20px 0 0"></div>
+    <button onclick="closeSignIn()" style="position:absolute;top:14px;right:16px;background:transparent;border:none;color:#8A9BB8;font-size:22px;cursor:pointer;line-height:1">x</button>
+    <div id="hp-modal-title" style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px">Welcome back</div>
+    <div id="hp-modal-sub" style="font-size:14px;color:#8A9BB8;margin-bottom:28px;line-height:1.6">Sign in to access your budget tool and saved budgets.</div>
+    <div style="display:flex;margin-bottom:28px;background:rgba(255,255,255,0.04);border-radius:8px;padding:3px">
+      <button id="hp-tab-signin" onclick="hpSwitchTab('signin')" style="flex:1;padding:9px;border:none;background:#1A2D50;color:#F8F4EC;font-size:13px;font-weight:500;cursor:pointer;border-radius:6px">Sign in</button>
+      <button id="hp-tab-signup" onclick="hpSwitchTab('signup')" style="flex:1;padding:9px;border:none;background:transparent;color:#8A9BB8;font-size:13px;font-weight:500;cursor:pointer;border-radius:6px">Create account</button>
+    </div>
+    <div id="hp-form-signin">
+      <div style="margin-bottom:16px"><label style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#8A9BB8;margin-bottom:6px;display:block">Email</label><input type="email" id="hp-signin-email" placeholder="you@example.com" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;outline:none;padding:13px 16px;font-size:14px;color:#fff;box-sizing:border-box"/></div>
+      <div style="margin-bottom:16px"><label style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#8A9BB8;margin-bottom:6px;display:block">Password</label><input type="password" id="hp-signin-password" placeholder="Your password" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;outline:none;padding:13px 16px;font-size:14px;color:#fff;box-sizing:border-box"/></div>
+      <button onclick="hpSignin()" style="width:100%;background:#C9A84C;color:#0B1426;padding:14px;border-radius:8px;font-size:14px;font-weight:500;border:none;cursor:pointer">Sign in &rarr;</button>
+    </div>
+    <div id="hp-form-signup" style="display:none">
+      <div style="margin-bottom:16px"><label style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#8A9BB8;margin-bottom:6px;display:block">Email</label><input type="email" id="hp-signup-email" placeholder="you@example.com" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;outline:none;padding:13px 16px;font-size:14px;color:#fff;box-sizing:border-box"/></div>
+      <div style="margin-bottom:16px"><label style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#8A9BB8;margin-bottom:6px;display:block">Password</label><input type="password" id="hp-signup-password" placeholder="Min. 6 characters" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;outline:none;padding:13px 16px;font-size:14px;color:#fff;box-sizing:border-box"/></div>
+      <button onclick="hpSignup()" style="width:100%;background:#C9A84C;color:#0B1426;padding:14px;border-radius:8px;font-size:14px;font-weight:500;border:none;cursor:pointer">Create free account &rarr;</button>
+    </div>
+    <div id="hp-auth-msg" style="font-size:13px;text-align:center;margin-top:14px;min-height:18px;color:#4CAF82"></div>
+  </div>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -688,6 +714,57 @@
     { threshold: 0.15 }
   );
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _sb=supabase.createClient('https://vogmzipskcctncanbgim.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ216aXBza2NjdG5jYW5iZ2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTEzNDMsImV4cCI6MjA5MDc2NzM0M30.-t614klOP52hqmmGVxoDFHBrRouvDo_9ShFz1Meipcg');
+
+_sb.auth.getSession().then(({data:{session}})=>{if(session)hpSetUser(session.user);});
+_sb.auth.onAuthStateChange((e,session)=>{if(session)hpSetUser(session.user);else hpClearUser();});
+
+function hpSetUser(user){
+  document.getElementById('hp-auth-overlay').style.opacity='0';
+  document.getElementById('hp-auth-overlay').style.pointerEvents='none';
+  const link=document.getElementById('nav-signin-link');
+  if(link){link.textContent=user.email.split('@')[0];link.onclick=function(e){e.preventDefault();if(confirm('Sign out?'))_sb.auth.signOut();};}
+}
+function hpClearUser(){
+  const link=document.getElementById('nav-signin-link');
+  if(link){link.textContent='Sign in';link.onclick=function(e){openSignIn(e);};}
+}
+function openSignIn(e){if(e)e.preventDefault();const o=document.getElementById('hp-auth-overlay');o.style.opacity='1';o.style.pointerEvents='all';document.getElementById('hp-auth-msg').textContent='';}
+function closeSignIn(){const o=document.getElementById('hp-auth-overlay');o.style.opacity='0';o.style.pointerEvents='none';}
+document.getElementById('hp-auth-overlay').addEventListener('click',function(e){if(e.target===this)closeSignIn();});
+function hpSwitchTab(tab){
+  document.getElementById('hp-tab-signin').style.background=tab==='signin'?'#1A2D50':'transparent';
+  document.getElementById('hp-tab-signin').style.color=tab==='signin'?'#F8F4EC':'#8A9BB8';
+  document.getElementById('hp-tab-signup').style.background=tab==='signup'?'#1A2D50':'transparent';
+  document.getElementById('hp-tab-signup').style.color=tab==='signup'?'#F8F4EC':'#8A9BB8';
+  document.getElementById('hp-form-signin').style.display=tab==='signin'?'block':'none';
+  document.getElementById('hp-form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('hp-auth-msg').textContent='';
+}
+function hpSetMsg(msg,color){const el=document.getElementById('hp-auth-msg');el.textContent=msg;el.style.color=color||'#4CAF82';}
+async function hpSignin(){
+  const email=document.getElementById('hp-signin-email').value.trim();
+  const password=document.getElementById('hp-signin-password').value;
+  if(!email||!password)return hpSetMsg('Please fill in all fields.','#E87070');
+  hpSetMsg('Signing in...','#8A9BB8');
+  const{error}=await _sb.auth.signInWithPassword({email,password});
+  if(error)return hpSetMsg(error.message,'#E87070');
+  hpSetMsg('Signed in! Redirecting...','#4CAF82');
+  setTimeout(()=>window.location.href='budget.html',900);
+}
+async function hpSignup(){
+  const email=document.getElementById('hp-signup-email').value.trim();
+  const password=document.getElementById('hp-signup-password').value;
+  if(!email||!password)return hpSetMsg('Please fill in all fields.','#E87070');
+  if(password.length<6)return hpSetMsg('Password must be at least 6 characters.','#E87070');
+  hpSetMsg('Creating account...','#8A9BB8');
+  const{error}=await _sb.auth.signUp({email,password});
+  if(error)return hpSetMsg(error.message,'#E87070');
+  hpSetMsg('Account created! Check your email to confirm.','#4CAF82');
+}
 </script>
 </body>
 </html>
