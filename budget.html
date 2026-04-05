@@ -537,6 +537,7 @@ function buildSteps(){
 }
 
 function startGuided(){
+  if(!currentUser){requireAuth();return;}
   steps=buildSteps();currentStep=0;
   budget={sources:[{name:'',amount:''}],fixed:{},entertain:{},savings:{}};
   editReturnToManual=false;
@@ -644,10 +645,10 @@ function guidedNo(g,k){
 
 function updateGuidedEntry(g,k,i,field,val){
   getGroupObj(g)[k][i][field]=field==='amount'?(parseFloat(val)||0):val;
-  // refresh total pill
   const entries=getEntries(g,k);const total=sumEntries(entries);
   const pill=document.querySelector('.entry-total-pill');
   if(pill)pill.innerHTML=`Total: <span>${fmt(total)}</span>`;
+  scheduleSave();
 }
 
 function removeGuidedEntry(g,k,i){
@@ -741,7 +742,7 @@ function switchToManual(){buildManualFields();updateManual();showScreen('screen-
 // ═══════════════════════════════
 // MANUAL ENTRY
 // ═══════════════════════════════
-function startManual(){buildManualFields();updateManual();showScreen('screen-manual');}
+function startManual(){if(!currentUser){requireAuth();return;}buildManualFields();updateManual();showScreen('screen-manual');}
 
 function buildManualFields(){
   buildIncomeFields();
@@ -762,7 +763,7 @@ function buildIncomeFields(){
 function updateIncomeSource(i,field,val){
   if(!budget.sources[i])return;
   budget.sources[i][field]=field==='amount'?(parseFloat(val)||0):val;
-  updateManual();
+  updateManual(); // updateManual already calls scheduleSave
 }
 function addIncomeRow(){budget.sources.push({name:'',amount:''});buildIncomeFields();updateManual();}
 function removeIncomeRow(i){budget.sources.splice(i,1);buildIncomeFields();updateManual();}
@@ -834,6 +835,7 @@ function updateManual(){
   if(leftover<0){leftEl.style.color='var(--coral)';leftEl.textContent=fmt(leftover);lblEl.textContent='Deficit After Savings';}
   else{leftEl.style.color='var(--green)';leftEl.textContent=fmt(leftover);lblEl.textContent='Amount Leftover';}
   drawDonut(inc,fix,ent,sav,leftover);
+  scheduleSave();
 }
 
 // ═══════════════════════════════
@@ -880,7 +882,7 @@ function saveCatModal(){
   const containerMap={fixed:'manual-fixed-fields',entertain:'manual-entertain-fields',savings:'manual-savings-fields'};
   const itemsMap={fixed:FIXED,entertain:ENTERTAIN,savings:SAVINGS};
   buildCatCards(containerMap[group],itemsMap[group],group);
-  updateManual();
+  updateManual(); // updateManual already calls scheduleSave
 }
 
 function closeCatModal(){document.getElementById('cat-modal-overlay').classList.remove('open');}
@@ -1018,20 +1020,48 @@ const SUPABASE_URL='https://vogmzipskcctncanbgim.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ216aXBza2NjdG5jYW5iZ2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTEzNDMsImV4cCI6MjA5MDc2NzM0M30.-t614klOP52hqmmGVxoDFHBrRouvDo_9ShFz1Meipcg';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let currentUser=null;
-sb.auth.getSession().then(({data:{session}})=>{if(session)setUser(session.user);});
-sb.auth.onAuthStateChange((event,session)=>{if(session)setUser(session.user);else clearUser();});
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session)setUser(session.user);
+  else clearUser();
+});
+sb.auth.onAuthStateChange((event,session)=>{
+  if(session)setUser(session.user);
+  else clearUser();
+});
 
 function setUser(user){
   currentUser=user;
+  const overlay=document.getElementById('auth-modal');
+  overlay.removeAttribute('data-required');
+  overlay.classList.remove('open');
   document.getElementById('nav-user').innerHTML=`<span class="nav-user-email">${user.email}</span><button class="btn-signout" onclick="handleSignout()">Sign out</button>`;
   const t=document.getElementById('save-cta-title'),d=document.getElementById('save-cta-desc'),b=document.getElementById('save-cta-btns');
-  if(t)t.textContent='Save this budget';
-  if(d)d.textContent='Save your budget to your account to track it month to month.';
-  if(b)b.innerHTML=`<button class="btn-create-account" onclick="saveBudgetToAccount()">Save to my account</button><button class="btn-download" onclick="downloadSummary()">Download summary</button>`;
+  if(t)t.textContent='Budget saved';
+  if(d)d.textContent='Your budget is saved automatically as you make changes.';
+  if(b)b.innerHTML=`<button class="btn-download" onclick="downloadSummary()">Download summary</button>`;
 }
-function clearUser(){currentUser=null;document.getElementById('nav-user').innerHTML=`<a href="index.html" style="color:var(--muted);font-size:13px;text-decoration:none">Home</a><button class="btn-signin-nav" onclick="openAuthModal()">Sign in</button>`;}
+function clearUser(){
+  currentUser=null;
+  _currentBudgetId=null;
+  document.getElementById('nav-user').innerHTML=`<a href="index.html" style="color:var(--muted);font-size:13px;text-decoration:none">Home</a><button class="btn-signin-nav" onclick="openAuthModal()">Sign in</button>`;
+  // If currently on tool screen, return to landing
+  const active=document.querySelector('.screen.active');
+  if(active&&active.id!=='screen-landing')showScreen('screen-landing');
+}
+function requireAuth(){
+  const overlay=document.getElementById('auth-modal');
+  overlay.classList.add('open');
+  overlay.setAttribute('data-required','1');
+  document.getElementById('auth-msg').textContent='';
+  document.querySelector('#auth-modal .modal-title').textContent='Sign in to continue';
+  document.querySelector('#auth-modal .modal-sub').textContent='Create a free account to access the budget tool. Your entries are saved automatically as you go.';
+}
 function openAuthModal(){document.getElementById('auth-modal').classList.add('open');document.getElementById('auth-msg').textContent='';}
-function closeAuthModal(){document.getElementById('auth-modal').classList.remove('open');}
+function closeAuthModal(){
+  const overlay=document.getElementById('auth-modal');
+  if(overlay.getAttribute('data-required'))return;
+  overlay.classList.remove('open');
+}
 document.getElementById('auth-modal').addEventListener('click',function(e){if(e.target===this)closeAuthModal();});
 function switchTab(tab){document.getElementById('tab-signup').classList.toggle('active',tab==='signup');document.getElementById('tab-signin').classList.toggle('active',tab==='signin');document.getElementById('auth-form-signup').style.display=tab==='signup'?'block':'none';document.getElementById('auth-form-signin').style.display=tab==='signin'?'block':'none';document.getElementById('auth-msg').textContent='';}
 function setAuthMsg(msg,type){const el=document.getElementById('auth-msg');el.textContent=msg;el.className='auth-msg '+type;}
@@ -1042,8 +1072,7 @@ async function handleSignup(){
   setAuthMsg('Creating account...','');
   const{error}=await sb.auth.signUp({email,password});
   if(error)return setAuthMsg(error.message,'error');
-  setAuthMsg('Account created! Check your email to confirm.','success');
-  setTimeout(()=>{closeAuthModal();saveBudgetToAccount();},2000);
+  setAuthMsg('Account created! Check your email to confirm, then sign in.','success');
 }
 async function handleSignin(){
   const email=document.getElementById('signin-email').value.trim(),password=document.getElementById('signin-password').value;
@@ -1052,17 +1081,41 @@ async function handleSignin(){
   const{error}=await sb.auth.signInWithPassword({email,password});
   if(error)return setAuthMsg(error.message,'error');
   setAuthMsg('Signed in!','success');
-  setTimeout(()=>{closeAuthModal();saveBudgetToAccount();},800);
 }
 async function handleSignout(){await sb.auth.signOut();}
-async function saveBudgetToAccount(){
-  if(!currentUser)return openAuthModal();
+let _saveTimer=null;
+let _currentBudgetId=null;
+function scheduleSave(){
+  if(!currentUser)return;
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>autoSaveBudget(),1500);
+}
+async function autoSaveBudget(){
+  if(!currentUser)return;
   const inc=budget.sources.reduce((s,x)=>s+(parseFloat(x.amount)||0),0);
   const fix=totalForGroup('fixed'),ent=totalForGroup('entertain'),sav=totalForGroup('savings'),leftover=inc-fix-ent-sav;
-  const{error}=await sb.from('budgets').insert({user_id:currentUser.id,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},created_at:new Date().toISOString()});
-  if(error){console.error(error);return;}
-  const ss=document.getElementById('save-success');if(ss)ss.style.display='flex';
-  const b=document.getElementById('save-cta-btns');if(b)b.innerHTML=`<button class="btn-download" onclick="downloadSummary()">Download summary</button><button onclick="showScreen('screen-landing')" style="background:transparent;border:1px solid var(--border);color:var(--cream);padding:12px 22px;border-radius:8px;font-family:var(--sans);font-size:14px;cursor:pointer">Start new budget</button>`;
+  const payload={user_id:currentUser.id,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},updated_at:new Date().toISOString()};
+  if(_currentBudgetId){
+    await sb.from('budgets').update(payload).eq('id',_currentBudgetId);
+  } else {
+    const{data,error}=await sb.from('budgets').insert({...payload,created_at:new Date().toISOString()}).select('id').single();
+    if(!error&&data)_currentBudgetId=data.id;
+  }
+  showSaveIndicator();
+}
+function showSaveIndicator(){
+  let ind=document.getElementById('auto-save-ind');
+  if(!ind){
+    ind=document.createElement('div');ind.id='auto-save-ind';
+    ind.style.cssText='position:fixed;bottom:20px;right:20px;background:rgba(76,175,130,0.15);border:1px solid rgba(76,175,130,0.4);color:#4CAF82;padding:8px 16px;border-radius:8px;font-size:12px;font-family:var(--sans);z-index:999;transition:opacity 0.5s;pointer-events:none';
+    document.body.appendChild(ind);
+  }
+  ind.textContent='Saved';ind.style.opacity='1';
+  clearTimeout(ind._t);ind._t=setTimeout(()=>ind.style.opacity='0',2500);
+}
+async function saveBudgetToAccount(){
+  if(!currentUser)return requireAuth();
+  await autoSaveBudget();
 }
 </script>
 </body>
