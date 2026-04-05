@@ -528,8 +528,11 @@ function buildSteps(){
   const s=[];
   s.push({type:'income',section:'Income',cat:'Income',q:"Let's start with your income.",hint:'Add each income source and your monthly net amount (after taxes).',color:'var(--blue)',skippable:false});
   FIXED.forEach(e=>s.push({type:'multi',section:'Fixed Expenses',cat:'Fixed Expenses',q:`Do you have ${e.label} expenses?`,hint:HINTS[e.key]||'Add entries with an optional identifier (e.g. address, account name).',key:e.key,group:'fixed',color:'var(--purple)',skippable:true}));
+  s.push({type:'other',section:'Fixed Expenses',cat:'Fixed Expenses',q:'Any other fixed expenses not listed?',hint:'Add anything not covered above — name it and enter the monthly amount.',group:'fixed',color:'var(--purple)',skippable:true});
   ENTERTAIN.forEach(e=>s.push({type:'multi',section:'Entertainment',cat:'Entertainment',q:`Do you spend money on ${e.label}?`,hint:HINTS[e.key]||'Add entries with an optional identifier.',key:e.key,group:'entertain',color:'var(--coral)',skippable:true}));
+  s.push({type:'other',section:'Entertainment',cat:'Entertainment',q:'Any other entertainment expenses not listed?',hint:'Add anything not covered above — name it and enter the monthly amount.',group:'entertain',color:'var(--coral)',skippable:true});
   SAVINGS.forEach(e=>s.push({type:'multi',section:'Savings',cat:'Savings',q:`Do you contribute to ${e.label}?`,hint:HINTS[e.key]||'Add entries with an optional identifier (e.g. account name).',key:e.key,group:'savings',color:'var(--gold)',skippable:true}));
+  s.push({type:'other',section:'Savings',cat:'Savings',q:'Are you saving for anything else?',hint:'e.g. Wedding, New Car, Home Down Payment — name it and enter the monthly amount.',group:'savings',color:'var(--gold)',skippable:true});
   return s;
 }
 
@@ -576,6 +579,7 @@ function renderStep(){
   btnNext.textContent=editReturnToManual?'Update & Return':'Continue \u2192';
   const content=document.getElementById('step-content');content.innerHTML='';
   if(step.type==='income')renderIncomeStep(content);
+  else if(step.type==='other')renderOtherStep(content,step);
   else renderMultiStep(content,step);
 }
 
@@ -652,6 +656,54 @@ function removeGuidedEntry(g,k,i){
   renderStep();
 }
 
+function renderOtherStep(el,step){
+  const g=step.group;
+  // find all other_ keys for this group, sorted
+  const existingKeys=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_')).sort();
+  // Show all existing custom entries
+  if(existingKeys.length>0){
+    const total=existingKeys.reduce((s,k)=>s+sumEntries(getEntries(g,k)),0);
+    if(total>0){const pill=document.createElement('div');pill.className='entry-total-pill';pill.innerHTML=`Total added: <span>${fmt(total)}</span>`;el.appendChild(pill);}
+    existingKeys.forEach(k=>{
+      const entries=getEntries(g,k);
+      entries.forEach((entry,i)=>{
+        const row=document.createElement('div');row.className='entry-row';
+        row.innerHTML=`<input class="entry-id-input" type="text" placeholder="Expense name (required)" value="${entry.id||''}" oninput="updateOtherEntry('${g}','${k}',${i},'id',this.value)"/><div class="entry-amt-wrap"><span class="entry-amt-prefix">$</span><input class="entry-amt-input" type="number" placeholder="0" value="${entry.amount||''}" oninput="updateOtherEntry('${g}','${k}',${i},'amount',this.value)"/></div><button class="entry-remove" onclick="removeOtherEntry('${g}','${k}',${i})">x</button>`;
+        el.appendChild(row);
+      });
+    });
+  }
+  // Yes/No for adding more
+  const hasAny=existingKeys.length>0;
+  const promptDiv=document.createElement('div');
+  promptDiv.style.marginTop=hasAny?'16px':'0';
+  promptDiv.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${hasAny?'Add another?':'Want to add one?'}</div><div class="yn-row"><button class="yn-btn yes" onclick="otherAddEntry('${g}')">Yes</button><button class="yn-btn no" onclick="nextStep()">No, continue</button></div>`;
+  el.appendChild(promptDiv);
+}
+
+function otherAddEntry(g){
+  const existing=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_'));
+  const k='other_'+g+'_'+(existing.length+1)+'_'+Date.now();
+  getGroupObj(g)[k]=[{id:'',amount:''}];
+  renderStep();
+  // focus first empty id field
+  setTimeout(()=>{const inputs=document.querySelectorAll('.entry-id-input');if(inputs.length)inputs[inputs.length-1].focus();},80);
+}
+
+function updateOtherEntry(g,k,i,field,val){
+  const arr=getGroupObj(g)[k];if(!arr||!arr[i])return;
+  arr[i][field]=field==='amount'?(parseFloat(val)||0):val;
+  const pill=document.querySelector('.entry-total-pill');
+  if(pill){const total=Object.keys(getGroupObj(g)).filter(kk=>kk.startsWith('other_')).reduce((s,kk)=>s+sumEntries(getEntries(g,kk)),0);pill.innerHTML=`Total added: <span>${fmt(total)}</span>`;}
+}
+
+function removeOtherEntry(g,k,i){
+  const arr=getGroupObj(g)[k];if(!arr)return;
+  arr.splice(i,1);
+  if(arr.length===0)delete getGroupObj(g)[k];
+  renderStep();
+}
+
 function nextStep(){
   if(editReturnToManual){
     // return to manual
@@ -709,6 +761,38 @@ function buildCatCards(containerId,items,g){
       <div class="cat-card-sub">${subText}</div>
     </div>`;
   });
+  // Render custom "other" entries
+  const otherKeys=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_'));
+  otherKeys.forEach(k=>{
+    const entries=getEntries(g,k);
+    const total=sumEntries(entries);
+    const label=entries[0]?.id||'Custom expense';
+    el.innerHTML+=`<div class="cat-card" style="border-color:rgba(255,255,255,0.15)" onclick="openCatModal('${g}','${k}')">
+      <div class="cat-card-edit">edit</div>
+      <div class="cat-card-label" style="color:var(--cream)">${label}</div>
+      <div class="cat-card-total has-value">${fmt(total)}</div>
+      <div class="cat-card-sub">${entries.length>1?entries.length+' entries':'Custom'}</div>
+    </div>`;
+  });
+  // Add expense button
+  const addLabels={fixed:'Add fixed expense',entertain:'Add entertainment expense',savings:'Add savings goal'};
+  el.innerHTML+=`<div class="cat-card" style="border:1px dashed rgba(201,168,76,0.3);background:transparent;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;cursor:pointer;min-height:72px" onclick="addCustomExpense('${g}','${containerId}')">
+    <span style="font-size:20px;color:var(--gold)">+</span>
+    <span style="font-size:11px;color:var(--muted)">${addLabels[g]||'Add expense'}</span>
+  </div>`;
+}
+
+function addCustomExpense(g,containerId){
+  const existing=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_'));
+  const k='other_'+g+'_'+(existing.length+1)+'_'+Date.now();
+  catModalState={group:g,key:k,entries:[{id:'',amount:''}],isCustom:true};
+  const groupLabels={fixed:'Fixed Expense',entertain:'Entertainment Expense',savings:'Savings Goal'};
+  const hints={fixed:'Name this expense and enter the monthly amount.',entertain:'Name this expense and enter the monthly amount.',savings:'What are you saving for? (e.g. Wedding, New Car) Enter the monthly amount.'};
+  document.getElementById('cat-modal-title').textContent='Add '+( groupLabels[g]||'Expense');
+  document.getElementById('cat-modal-hint').textContent=hints[g]||'Name this expense and enter the amount.';
+  document.getElementById('cat-modal-overlay').classList.add('open');
+  renderCatModalEntries();
+  setTimeout(()=>{const f=document.querySelector('.cat-modal-id');if(f)f.focus();},80);
 }
 
 function updateManual(){
@@ -773,7 +857,9 @@ function saveCatModal(){
   if(valid.length>0)getGroupObj(group)[key]=valid;
   else delete getGroupObj(group)[key];
   closeCatModal();
-  buildCatCards(`manual-${group==='fixed'?'fixed':group==='entertain'?'entertain':'savings'}-fields`,group==='fixed'?FIXED:group==='entertain'?ENTERTAIN:SAVINGS,group);
+  const containerMap={fixed:'manual-fixed-fields',entertain:'manual-entertain-fields',savings:'manual-savings-fields'};
+  const itemsMap={fixed:FIXED,entertain:ENTERTAIN,savings:SAVINGS};
+  buildCatCards(containerMap[group],itemsMap[group],group);
   updateManual();
 }
 
@@ -838,23 +924,34 @@ function buildBreakdown(fix,ent,sav){
       entries.forEach(en=>bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px;padding-top:4px"><span class="breakdown-name" style="color:var(--muted)">${en.id||'Entry'}</span><span class="breakdown-amt">${fmt(en.amount)}</span></div>`);
     }
   });
+  // Other fixed
+  Object.keys(budget.fixed).filter(k=>k.startsWith('other_')).forEach(k=>{
+    const entries=getEntries('fixed',k);if(!entries.length)return;
+    const total=sumEntries(entries);const label=entries[0].id||'Other';
+    if(entries.length===1)bd.innerHTML+=`<div class="breakdown-item"><span class="breakdown-name">${label}</span><span class="breakdown-amt">${fmt(total)}</span></div>`;
+    else{bd.innerHTML+=`<div class="breakdown-item" style="padding-bottom:4px"><span class="breakdown-name" style="font-weight:500">${label}</span><span class="breakdown-amt">${fmt(total)}</span></div>`;entries.forEach(en=>bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px;padding-top:4px"><span class="breakdown-name" style="color:var(--muted)">${en.id||'Entry'}</span><span class="breakdown-amt">${fmt(en.amount)}</span></div>`);}
+  });
   const entItems=ENTERTAIN.filter(e=>sumEntries(getEntries('entertain',e.key))>0);
-  if(entItems.length){
+  const entOther=Object.keys(budget.entertain).filter(k=>k.startsWith('other_')&&sumEntries(getEntries('entertain',k))>0);
+  if(entItems.length||entOther.length){
     bd.innerHTML+=`<div class="breakdown-item" style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.07);padding-top:14px"><span class="breakdown-name" style="color:var(--coral);font-weight:500">Entertainment</span><span class="breakdown-amt" style="color:var(--coral)">${fmt(ent)}</span></div>`;
     entItems.forEach(e=>{
       const entries=getEntries('entertain',e.key);const t=sumEntries(entries);
       if(entries.length===1&&!entries[0].id)bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px"><span class="breakdown-name">${e.label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;
       else{bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px;padding-bottom:4px"><span class="breakdown-name" style="font-weight:500">${e.label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;entries.forEach(en=>bd.innerHTML+=`<div class="breakdown-item" style="padding-left:28px;padding-top:4px"><span class="breakdown-name" style="color:var(--muted)">${en.id||'Entry'}</span><span class="breakdown-amt">${fmt(en.amount)}</span></div>`);}
     });
+    entOther.forEach(k=>{const entries=getEntries('entertain',k);const t=sumEntries(entries);const label=entries[0].id||'Other';bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px"><span class="breakdown-name">${label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;});
   }
   const savItems=SAVINGS.filter(e=>sumEntries(getEntries('savings',e.key))>0);
-  if(savItems.length){
+  const savOther=Object.keys(budget.savings).filter(k=>k.startsWith('other_')&&sumEntries(getEntries('savings',k))>0);
+  if(savItems.length||savOther.length){
     bd.innerHTML+=`<div class="breakdown-item" style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.07);padding-top:14px"><span class="breakdown-name" style="color:var(--gold2);font-weight:500">Savings</span><span class="breakdown-amt" style="color:var(--gold2)">${fmt(sav)}</span></div>`;
     savItems.forEach(e=>{
       const entries=getEntries('savings',e.key);const t=sumEntries(entries);
       if(entries.length===1&&!entries[0].id)bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px"><span class="breakdown-name">${e.label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;
       else{bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px;padding-bottom:4px"><span class="breakdown-name" style="font-weight:500">${e.label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;entries.forEach(en=>bd.innerHTML+=`<div class="breakdown-item" style="padding-left:28px;padding-top:4px"><span class="breakdown-name" style="color:var(--muted)">${en.id||'Entry'}</span><span class="breakdown-amt">${fmt(en.amount)}</span></div>`);}
     });
+    savOther.forEach(k=>{const entries=getEntries('savings',k);const t=sumEntries(entries);const label=entries[0].id||'Other';bd.innerHTML+=`<div class="breakdown-item" style="padding-left:14px"><span class="breakdown-name">${label}</span><span class="breakdown-amt">${fmt(t)}</span></div>`;});
   }
 }
 
