@@ -464,6 +464,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 <!-- RESULTS -->
 <section class="screen" id="screen-results">
   <div class="results-inner">
+    <div style="margin-bottom:20px">
+      <button onclick="showScreen('screen-manual')" style="background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:6px;transition:color 0.2s;padding:0" onmouseover="this.style.color='var(--cream)'" onmouseout="this.style.color='var(--muted)'">&larr; Back to Manual Entry</button>
+    </div>
     <div class="results-eyebrow">Your budget breakdown</div>
     <h2 class="results-title">Here's your <em>financial picture</em></h2>
     <p class="results-sub" id="results-sub"></p>
