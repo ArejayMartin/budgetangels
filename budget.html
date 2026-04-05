@@ -274,6 +274,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
   <a href="index.html" class="logo">Budget<span>Angels</span></a>
   <div class="nav-user" id="nav-user">
     <a href="index.html" style="color:var(--muted);font-size:13px;text-decoration:none">Home</a>
+    <a href="transactions.html" style="color:var(--muted);font-size:13px;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--gold2)'" onmouseout="this.style.color='var(--muted)'">Transactions</a>
     <button class="btn-signin-nav" onclick="openAuthModal()">Sign in</button>
   </div>
 </nav>
@@ -1034,7 +1035,7 @@ function setUser(user){
   const overlay=document.getElementById('auth-modal');
   overlay.removeAttribute('data-required');
   overlay.classList.remove('open');
-  document.getElementById('nav-user').innerHTML=`<span class="nav-user-email">${user.email}</span><button class="btn-signout" onclick="handleSignout()">Sign out</button>`;
+  document.getElementById('nav-user').innerHTML=`<span class="nav-user-email">${user.email}</span><a href="transactions.html" style="color:var(--muted);font-size:13px;text-decoration:none;margin:0 4px" onmouseover="this.style.color='var(--gold2)'" onmouseout="this.style.color='var(--muted)'">Transactions</a><button class="btn-signout" onclick="handleSignout()">Sign out</button>`;
   // Update landing auth bar
   const lBtn=document.getElementById('landing-signin-btn');
   const lStatus=document.getElementById('landing-auth-status');
@@ -1104,7 +1105,9 @@ async function autoSaveBudget(){
   if(!currentUser)return;
   const inc=budget.sources.reduce((s,x)=>s+(parseFloat(x.amount)||0),0);
   const fix=totalForGroup('fixed'),ent=totalForGroup('entertain'),sav=totalForGroup('savings'),leftover=inc-fix-ent-sav;
-  const payload={user_id:currentUser.id,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},updated_at:new Date().toISOString()};
+  const now=new Date();
+  const currentMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const payload={user_id:currentUser.id,month:currentMonth,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},updated_at:now.toISOString()};
   if(_currentBudgetId){
     await sb.from('budgets').update(payload).eq('id',_currentBudgetId);
   } else {
