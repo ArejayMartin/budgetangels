@@ -225,7 +225,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .auth-msg{font-size:13px;text-align:center;margin-top:14px;min-height:18px}
 .auth-msg.error{color:#E87070}.auth-msg.success{color:var(--green)}
 .save-success{background:rgba(76,175,130,0.1);border:1px solid rgba(76,175,130,0.3);border-radius:8px;padding:14px 18px;align-items:center;gap:10px;font-size:14px;color:var(--green);margin-bottom:16px}
-@media(max-width:900px){.manual-body{grid-template-columns:1fr}.manual-sidebar{position:static;height:auto}.fields-grid{grid-template-columns:repeat(2,1fr)}.buckets-grid{grid-template-columns:1fr}}
+/* MONTH BAR */
+.month-bar{display:flex;align-items:center;gap:10px;padding:10px 48px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;flex-wrap:wrap}
+.month-nav-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;line-height:1;flex-shrink:0}
+.month-nav-btn:hover{border-color:var(--gold);color:var(--gold2)}
+.month-current{font-size:13px;font-weight:500;color:var(--white);min-width:110px;text-align:center}
+.month-badge{font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:3px 10px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.month-badge:hover,.month-badge.active{background:rgba(201,168,76,0.1);border-color:var(--gold);color:var(--gold2)}
+.month-saving{font-size:11px;color:var(--green);opacity:0;transition:opacity 0.3s;margin-left:4px}
+@media(max-width:900px){.manual-body{grid-template-columns:1fr}.manual-sidebar{position:static;height:auto}.fields-grid{grid-template-columns:repeat(2,1fr)}.buckets-grid{grid-template-columns:1fr}.month-bar{padding:10px 20px}}
 @media(max-width:600px){nav{padding:16px 20px}.guided-card{padding:28px 20px}.fields-grid{grid-template-columns:1fr}.formula-band{padding:14px}.fi-val{font-size:16px}}
 </style>
 </head>
@@ -312,6 +320,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 
 <!-- GUIDED -->
 <section class="screen" id="screen-guided">
+  <div class="month-bar" id="guided-month-bar">
+    <span style="font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Budget month:</span>
+    <button class="month-nav-btn" onclick="changeActiveBudgetMonth(-1)">&#8249;</button>
+    <span class="month-current" id="guided-month-label">April 2026</span>
+    <button class="month-nav-btn" onclick="changeActiveBudgetMonth(1)">&#8250;</button>
+    <div id="guided-month-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <span class="month-saving" id="month-saving-ind">Saved</span>
+  </div>
   <div class="progress-wrap">
     <div class="progress-meta">
       <span class="progress-section" id="progress-section-name">Income</span>
@@ -341,7 +357,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 <section class="screen" id="screen-manual">
   <div class="manual-body">
     <div class="manual-form">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
         <div>
           <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Entry mode</div>
           <div style="font-size:16px;font-weight:500;color:var(--white)">Manual Entry <span style="font-size:12px;color:var(--muted);font-weight:300">— click any category to edit</span></div>
@@ -349,6 +365,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
         <button onclick="switchToGuided()" style="background:rgba(201,168,76,0.08);border:1px solid var(--border);color:var(--gold2);padding:10px 18px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer">
           Switch to Guided
         </button>
+      </div>
+      <!-- MONTH BAR -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Budget month:</span>
+        <button class="month-nav-btn" onclick="changeActiveBudgetMonth(-1)">&#8249;</button>
+        <span class="month-current" id="manual-month-label">April 2026</span>
+        <button class="month-nav-btn" onclick="changeActiveBudgetMonth(1)">&#8250;</button>
+        <div id="manual-month-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <span class="month-saving" id="manual-saving-ind" style="margin-left:auto">Saved</span>
       </div>
       <!-- Income section (manual rows, not card-based) -->
       <div class="section-block">
@@ -504,8 +529,79 @@ const HINTS={
 let budget={sources:[{name:'',amount:''}],fixed:{},entertain:{},savings:{}};
 let steps=[],currentStep=0;
 let catModalState={group:null,key:null,entries:[]};
-// When editing from manual, store which step to jump to
 let editReturnToManual=false;
+
+// Month state
+let activeBudgetMonth=fmtBudgetMonth(new Date());
+let savedBudgetMonths=[];
+
+function fmtBudgetMonth(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function budgetMonthLabel(m){const[y,mo]=m.split('-');return new Date(y,parseInt(mo)-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});}
+
+function updateMonthUI(){
+  const label=budgetMonthLabel(activeBudgetMonth);
+  const el1=document.getElementById('guided-month-label');
+  const el2=document.getElementById('manual-month-label');
+  if(el1)el1.textContent=label;
+  if(el2)el2.textContent=label;
+  renderMonthPills();
+}
+
+function renderMonthPills(){
+  const pills=savedBudgetMonths.slice(0,5);
+  ['guided-month-pills','manual-month-pills'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    let html='';
+    pills.forEach(m=>{
+      const active=m===activeBudgetMonth?'active':'';
+      const lbl=budgetMonthLabel(m);
+      html+='<div class="month-badge '+active+'" onclick="switchBudgetMonth(\'' +m+ '\')">'+lbl+'</div>';
+    });
+    el.innerHTML=html;
+  });
+}
+
+function changeActiveBudgetMonth(dir){
+  const[y,mo]=activeBudgetMonth.split('-').map(Number);
+  const d=new Date(y,mo-1+dir,1);
+  switchBudgetMonth(fmtBudgetMonth(d));
+}
+
+async function switchBudgetMonth(m){
+  activeBudgetMonth=m;
+  updateMonthUI();
+  // Load that month's budget if it exists
+  if(window.currentUser){
+    const{data}=await window._sb.from('budgets').select('*').eq('user_id',window.currentUser.id).eq('month',m).order('updated_at',{ascending:false}).limit(1);
+    if(data&&data.length>0){
+      const b=data[0];
+      if(b.details){
+        budget.sources=b.details.sources||[{name:'',amount:''}];
+        budget.fixed=b.details.fixed||{};
+        budget.entertain=b.details.entertain||{};
+        budget.savings=b.details.savings||{};
+      }
+    } else {
+      // New month — start fresh
+      budget={sources:[{name:'',amount:''}],fixed:{},entertain:{},savings:{}};
+    }
+    // Refresh current screen
+    const active=document.querySelector('.screen.active');
+    if(active&&active.id==='screen-manual'){buildManualFields();updateManual();}
+    else if(active&&active.id==='screen-guided'){renderStep();}
+  }
+}
+
+async function loadSavedMonths(){
+  if(!window.currentUser)return;
+  const{data}=await window._sb.from('budgets').select('month').eq('user_id',window.currentUser.id).not('month','is',null);
+  if(data){
+    const months=new Set([...(data||[]).map(r=>r.month),activeBudgetMonth]);
+    savedBudgetMonths=[...months].sort().reverse();
+  }
+  updateMonthUI();
+}
 
 // ═══════════════════════════════
 // HELPERS
@@ -1020,6 +1116,7 @@ function downloadSummary(){
 const SUPABASE_URL='https://vogmzipskcctncanbgim.supabase.co'; // v2
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ216aXBza2NjdG5jYW5iZ2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTEzNDMsImV4cCI6MjA5MDc2NzM0M30.-t614klOP52hqmmGVxoDFHBrRouvDo_9ShFz1Meipcg';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=sb;
 let currentUser=null;
 sb.auth.getSession().then(({data:{session}})=>{
   if(session)setUser(session.user);
@@ -1032,9 +1129,11 @@ sb.auth.onAuthStateChange((event,session)=>{
 
 function setUser(user){
   currentUser=user;
+  window.currentUser=user;
   const overlay=document.getElementById('auth-modal');
   overlay.removeAttribute('data-required');
   overlay.classList.remove('open');
+  loadSavedMonths();
   document.getElementById('nav-user').innerHTML=`<span class="nav-user-email">${user.email}</span><a href="transactions.html" style="color:var(--muted);font-size:13px;text-decoration:none;margin:0 4px" onmouseover="this.style.color='var(--gold2)'" onmouseout="this.style.color='var(--muted)'">Transactions</a><button class="btn-signout" onclick="handleSignout()">Sign out</button>`;
   // Update landing auth bar
   const lBtn=document.getElementById('landing-signin-btn');
@@ -1106,8 +1205,7 @@ async function autoSaveBudget(){
   const inc=budget.sources.reduce((s,x)=>s+(parseFloat(x.amount)||0),0);
   const fix=totalForGroup('fixed'),ent=totalForGroup('entertain'),sav=totalForGroup('savings'),leftover=inc-fix-ent-sav;
   const now=new Date();
-  const currentMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  const payload={user_id:currentUser.id,month:currentMonth,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},updated_at:now.toISOString()};
+  const payload={user_id:currentUser.id,month:activeBudgetMonth,income:inc,fixed_expenses:fix,entertainment:ent,savings:sav,leftover,details:{sources:budget.sources,fixed:budget.fixed,entertain:budget.entertain,savings:budget.savings},updated_at:now.toISOString()};
   if(_currentBudgetId){
     await sb.from('budgets').update(payload).eq('id',_currentBudgetId);
   } else {
@@ -1125,6 +1223,13 @@ function showSaveIndicator(){
   }
   ind.textContent='Saved';ind.style.opacity='1';
   clearTimeout(ind._t);ind._t=setTimeout(()=>ind.style.opacity='0',2500);
+  // Also flash inline indicators
+  ['month-saving-ind','manual-saving-ind'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',2500);}
+  });
+  // Add current month to pills if not there
+  if(!savedBudgetMonths.includes(activeBudgetMonth)){savedBudgetMonths.unshift(activeBudgetMonth);renderMonthPills();}
 }
 async function saveBudgetToAccount(){
   if(!currentUser)return requireAuth();
