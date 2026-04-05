@@ -656,45 +656,65 @@ function removeGuidedEntry(g,k,i){
   renderStep();
 }
 
+// ── "other" steps: each step owns one named category key ──────────────────
+// step.otherKey holds the specific other_xxx key this step is editing.
+// "Any more?" injects a fresh step right after current position.
+
 function renderOtherStep(el,step){
   const g=step.group;
-  // find all other_ keys for this group, sorted
-  const existingKeys=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_')).sort();
-  // Show all existing custom entries
-  if(existingKeys.length>0){
-    const total=existingKeys.reduce((s,k)=>s+sumEntries(getEntries(g,k)),0);
-    if(total>0){const pill=document.createElement('div');pill.className='entry-total-pill';pill.innerHTML=`Total added: <span>${fmt(total)}</span>`;el.appendChild(pill);}
-    existingKeys.forEach(k=>{
-      const entries=getEntries(g,k);
-      entries.forEach((entry,i)=>{
-        const row=document.createElement('div');row.className='entry-row';
-        row.innerHTML=`<input class="entry-id-input" type="text" placeholder="Expense name (required)" value="${entry.id||''}" oninput="updateOtherEntry('${g}','${k}',${i},'id',this.value)"/><div class="entry-amt-wrap"><span class="entry-amt-prefix">$</span><input class="entry-amt-input" type="number" placeholder="0" value="${entry.amount||''}" oninput="updateOtherEntry('${g}','${k}',${i},'amount',this.value)"/></div><button class="entry-remove" onclick="removeOtherEntry('${g}','${k}',${i})">x</button>`;
-        el.appendChild(row);
-      });
-    });
+  // Generate or reuse the key for THIS step
+  if(!step.otherKey){
+    const existing=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_'));
+    step.otherKey='other_'+g+'_'+(existing.length+1)+'_'+Date.now();
   }
-  // Yes/No for adding more
-  const hasAny=existingKeys.length>0;
-  const promptDiv=document.createElement('div');
-  promptDiv.style.marginTop=hasAny?'16px':'0';
-  promptDiv.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${hasAny?'Add another?':'Want to add one?'}</div><div class="yn-row"><button class="yn-btn yes" onclick="otherAddEntry('${g}')">Yes</button><button class="yn-btn no" onclick="nextStep()">No, continue</button></div>`;
-  el.appendChild(promptDiv);
+  const k=step.otherKey;
+  // Ensure array exists
+  if(!Array.isArray(getGroupObj(g)[k]))getGroupObj(g)[k]=[{id:'',amount:''}];
+  const entries=getGroupObj(g)[k];
+  const total=sumEntries(entries);
+
+  // Total pill
+  if(total>0){const pill=document.createElement('div');pill.className='entry-total-pill';pill.innerHTML=`Total: <span>${fmt(total)}</span>`;el.appendChild(pill);}
+
+  // Entry rows (identical style to regular multi steps)
+  const listWrap=document.createElement('div');listWrap.className='entry-list';
+  entries.forEach((entry,i)=>{
+    const row=document.createElement('div');row.className='entry-row';
+    row.innerHTML=`<input class="entry-id-input" type="text" placeholder="Expense name (required)" value="${entry.id||''}" oninput="updateOtherEntry('${g}','${k}',${i},'id',this.value)"/><div class="entry-amt-wrap"><span class="entry-amt-prefix">$</span><input class="entry-amt-input" type="number" placeholder="0" value="${entry.amount||''}" oninput="updateOtherEntry('${g}','${k}',${i},'amount',this.value)"/></div>${i>0?`<button class="entry-remove" onclick="removeOtherEntry('${g}','${k}',${i})">x</button>`:'<span style="width:22px"></span>'}`;
+    listWrap.appendChild(row);
+  });
+  // "+ Add another" button inside the card (same category)
+  const groupLabel={fixed:'expense',entertain:'expense',savings:'goal'}[g]||'item';
+  const addRowBtn=document.createElement('button');addRowBtn.className='add-entry-btn';
+  addRowBtn.textContent='+ Add another '+groupLabel+' under this category';
+  addRowBtn.onclick=()=>{getGroupObj(g)[k].push({id:'',amount:''});renderStep();setTimeout(()=>{const ins=document.querySelectorAll('.entry-amt-input');if(ins.length)ins[ins.length-1].focus();},60);};
+  listWrap.appendChild(addRowBtn);
+  el.appendChild(listWrap);
+
+  // "Any more [separate] expenses?" Yes/No at the bottom
+  const moreLabels={fixed:'Any more separate fixed expenses?',entertain:'Any more separate entertainment expenses?',savings:'Saving for anything else?'};
+  const sep=document.createElement('div');sep.style.cssText='margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.07)';
+  sep.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${moreLabels[g]||'Any more?'}</div><div class="yn-row"><button class="yn-btn yes" onclick="otherAddCategory('${g}')">Yes</button><button class="yn-btn no" onclick="nextStep()">No, continue</button></div>`;
+  el.appendChild(sep);
 }
 
-function otherAddEntry(g){
-  const existing=Object.keys(getGroupObj(g)).filter(k=>k.startsWith('other_'));
-  const k='other_'+g+'_'+(existing.length+1)+'_'+Date.now();
-  getGroupObj(g)[k]=[{id:'',amount:''}];
-  renderStep();
-  // focus first empty id field
-  setTimeout(()=>{const inputs=document.querySelectorAll('.entry-id-input');if(inputs.length)inputs[inputs.length-1].focus();},80);
+// User clicked Yes to add a BRAND NEW separate category — inject new step after current
+function otherAddCategory(g){
+  const sectionLabels={fixed:'Fixed Expenses',entertain:'Entertainment',savings:'Savings'};
+  const qLabels={fixed:'Any other fixed expenses not listed?',entertain:'Any other entertainment expenses not listed?',savings:'Are you saving for anything else?'};
+  const hLabels={fixed:'Name this expense and enter the monthly amount.',entertain:'Name this expense and enter the monthly amount.',savings:'e.g. Wedding, New Car — name it and enter the monthly amount.'};
+  const colors={fixed:'var(--purple)',entertain:'var(--coral)',savings:'var(--gold)'};
+  const newStep={type:'other',section:sectionLabels[g],cat:sectionLabels[g],q:qLabels[g],hint:hLabels[g],group:g,color:colors[g],skippable:true};
+  // Insert right after current step
+  steps.splice(currentStep+1,0,newStep);
+  nextStep();
 }
 
 function updateOtherEntry(g,k,i,field,val){
   const arr=getGroupObj(g)[k];if(!arr||!arr[i])return;
   arr[i][field]=field==='amount'?(parseFloat(val)||0):val;
   const pill=document.querySelector('.entry-total-pill');
-  if(pill){const total=Object.keys(getGroupObj(g)).filter(kk=>kk.startsWith('other_')).reduce((s,kk)=>s+sumEntries(getEntries(g,kk)),0);pill.innerHTML=`Total added: <span>${fmt(total)}</span>`;}
+  if(pill){pill.innerHTML=`Total: <span>${fmt(sumEntries(arr))}</span>`;}
 }
 
 function removeOtherEntry(g,k,i){
