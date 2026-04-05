@@ -483,7 +483,7 @@ function showAmountField(el,g,k,lbl,val){
 }
 
 function saveAmt(g,k,v){if(g==='fixed')budget.fixed[k]=parseFloat(v)||0;else if(g==='entertain')budget.entertain[k]=parseFloat(v)||0;else budget.savings[k]=parseFloat(v)||0;}
-function nextStep(){if(currentStep<steps.length-1){currentStep++;renderStep();}else showResults();}
+function nextStep(){if(currentStep<steps.length-1){currentStep++;renderStep();}else{buildManualFields();syncManualFromBudget();showScreen('screen-manual');updateManual();}}
 function prevStep(){if(currentStep>0){currentStep--;renderStep();}}
 function skipStep(){nextStep();}
 
